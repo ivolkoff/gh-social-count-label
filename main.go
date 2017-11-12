@@ -67,9 +67,7 @@ func main() {
         })
     })
 
-    httpInfo := fmt.Sprintf(":%d", port)
-    log.Debug("HttpAPIInit | ListenAndServe | Port: " + httpInfo)
-    if err := router.Run(httpInfo); err != nil {
+    if err := router.Run(":"+port); err != nil {
         log.Panicf("ERROR! HttpAPI init: %s", err)
     }
 }
