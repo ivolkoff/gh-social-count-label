@@ -1,1 +1,1 @@
-web: go-getting-started
+web: gh-social-count-label
