@@ -1,9 +1,7 @@
 package main
 
 import (
-    "github.com/gin-gonic/gin"
     "fmt"
-    log "github.com/sirupsen/logrus"
     "strings"
     "net/url"
     "net/http"
@@ -11,6 +9,10 @@ import (
     "encoding/json"
     "time"
     "os"
+    "github.com/gin-contrib/cache"
+    "github.com/gin-contrib/cache/persistence"
+    log "github.com/sirupsen/logrus"
+    "github.com/gin-gonic/gin"
 )
 
 type ApiResponse struct {
@@ -34,12 +36,7 @@ type GitHubRepos struct {
     ForksCount      int `json:"forks_count"`
 }
 
-type GitHubReposCache struct {
-    LastUpdate  time.Time
-    GitHubRepos *GitHubRepos
-}
-
-var GitHubReposCacheList = make(map[string]*GitHubReposCache)
+var err error
 
 func main() {
     port := os.Getenv("PORT")
@@ -47,7 +44,22 @@ func main() {
         log.Fatal("$PORT must be set")
     }
 
-    log.SetLevel(log.DebugLevel)
+    if os.Getenv("APP_ENV") == "local" {
+        log.SetLevel(log.DebugLevel)
+    } else {
+        log.SetLevel(log.InfoLevel)
+    }
+
+    var REDIS_URL *url.URL
+    REDIS_URL, err = url.Parse(os.Getenv("REDIS_URL"))
+    if err != nil {
+        log.Fatalf("RedisURL parse ERROR: ", err)
+    }
+    REDIS_URL_USER_PASSWORD, _ := REDIS_URL.User.Password()
+    REDIS_STORE := persistence.NewRedisCache(REDIS_URL.Host, REDIS_URL_USER_PASSWORD, time.Second)
+    if err != nil {
+        log.Fatalf("Redis init | ERROR: ", err)
+    }
 
     router := gin.Default()
 
@@ -58,7 +70,7 @@ func main() {
         })
     })
 
-    router.GET("/lable", httpLable)
+    router.GET("/lable", cache.CachePage(REDIS_STORE, time.Minute, httpLable))
 
     router.NoRoute(func(c *gin.Context) {
         c.JSON(404, ApiResponse{
@@ -67,7 +79,7 @@ func main() {
         })
     })
 
-    if err := router.Run(":"+port); err != nil {
+    if err := router.Run(":" + port); err != nil {
         log.Panicf("ERROR! HttpAPI init: %s", err)
     }
 }
@@ -80,25 +92,13 @@ func httpLable(ctx *gin.Context) {
     if err != nil {
         return
     }
-
     log.Debugf("httpLable | httpLableQuery = %+v", httpLableQuery)
+    log.Infof("httpLable | httpLableQuery.HostParse = %+v", httpLableQuery.HostParse)
 
-    GitHubReposCacheKey := fmt.Sprintf("%s/%s", httpLableQuery.HostParse.User, httpLableQuery.HostParse.Repo)
-    log.Debugf("httpLable | GitHubReposCacheKey = %s", GitHubReposCacheKey)
-
-    var GitHubRepos *GitHubRepos
-    //TODO: проверка времени кэша
-    if GitHubReposCacheList[GitHubReposCacheKey] == nil {
-        GitHubRepos, err := httpLableQuery.GetGitHubRepos(ctx)
-        if err != nil {
-            return
-        }
-        GitHubReposCacheList[GitHubReposCacheKey] = &GitHubReposCache{
-            time.Now(),
-            GitHubRepos,
-        }
+    GitHubRepos, err := httpLableQuery.GetGitHubRepos(ctx)
+    if err != nil {
+        return
     }
-    GitHubRepos = GitHubReposCacheList[GitHubReposCacheKey].GitHubRepos
 
     log.Debugf("httpLable | GitHubRepos = %+v", GitHubRepos)
 
@@ -116,7 +116,7 @@ func httpLable(ctx *gin.Context) {
     }
     countString := strings.Join(counts, "; ")
 
-    charWidth := 6.13200
+    charWidth := 6.33200
 
     titleString := `counts`
 
