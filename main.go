@@ -37,11 +37,23 @@ type GitHubRepos struct {
 }
 
 var err error
+var GITHUB_CLIENT_ID string
+var GITHUB_CLIENT_SECRET string
 
 func main() {
-    port := os.Getenv("PORT")
-    if port == "" {
+    PORT := os.Getenv("PORT")
+    if PORT == "" {
         log.Fatal("$PORT must be set")
+    }
+
+    GITHUB_CLIENT_ID = os.Getenv("GITHUB_CLIENT_ID")
+    if GITHUB_CLIENT_ID == "" {
+        log.Fatal("$GITHUB_CLIENT_ID must be set")
+    }
+
+    GITHUB_CLIENT_SECRET = os.Getenv("GITHUB_CLIENT_SECRET")
+    if GITHUB_CLIENT_SECRET == "" {
+        log.Fatal("GITHUB_CLIENT_SECRET must be set")
     }
 
     if os.Getenv("APP_ENV") == "local" {
@@ -79,7 +91,7 @@ func main() {
         })
     })
 
-    if err := router.Run(":" + port); err != nil {
+    if err := router.Run(":" + PORT); err != nil {
         log.Panicf("ERROR! HttpAPI init: %s", err)
     }
 }
@@ -175,7 +187,7 @@ func (q *httpLableQuery) ParseByCTX(ctx *gin.Context) error {
 }
 
 func (q *httpLableQuery) GetGitHubRepos(ctx *gin.Context) (GitHubRepos *GitHubRepos, err error) {
-    res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/%s", q.HostParse.User, q.HostParse.Repo))
+    res, err := http.Get(fmt.Sprintf("https://api.github.com/repos/%s/%s?client_id=%s&client_secret=%s", q.HostParse.User, q.HostParse.Repo, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET))
     defer res.Body.Close()
     if err != nil {
         log.Panicf("httpLable | http.Get ERROR: %s", err)
@@ -186,6 +198,7 @@ func (q *httpLableQuery) GetGitHubRepos(ctx *gin.Context) (GitHubRepos *GitHubRe
         log.Panicf("httpLable | ioutil.ReadAll ERROR: %s", err)
         return nil, err
     }
+    //log.Panicf("httpLable | robots: %s", robots)
     err = json.Unmarshal(robots, &GitHubRepos)
     if err != nil {
         log.Panicf("httpLable | json.Unmarshal ERROR: %s", err)
