@@ -133,20 +133,20 @@ func httpLable(ctx *gin.Context) {
     offsetCounXString := fmt.Sprintf("%f", offsetCounX)
 
     svgString := `
-    <svg xmlns="http://www.w3.org/2000/svg" width="` + widthAllString + `" height="20">
+    <svg xmlns="http://www.w3.org/2000/svg" width="` + widthAllString + `" height="18">
     <linearGradient id="a" x2="0" y2="100%">
         <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
         <stop offset="1" stop-opacity=".1"/>
     </linearGradient>
-    <rect rx="3" width="` + widthAllString + `" height="20" fill="#555"/>
-    <rect rx="3" x="` + widthTitleString + `" width="` + fmt.Sprintf("%f", widthAll-widthTitle) + `" height="20" fill="#4c1"/>
-    <path fill="#4c1" d="M` + widthTitleString + ` 0h4v20h-4z"/>
-    <rect rx="3" width="` + widthAllString + `" height="20" fill="url(#a)"/>
+    <rect rx="3" width="` + widthAllString + `" height="18" fill="#555"/>
+    <rect rx="3" x="` + widthTitleString + `" width="` + fmt.Sprintf("%f", widthAll-widthTitle) + `" height="18" fill="#4c1"/>
+    <path fill="#4c1" d="M` + widthTitleString + ` 0h4v18h-4z"/>
+    <rect rx="3" width="` + widthAllString + `" height="18" fill="url(#a)"/>
     <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
-        <text x="` + offsetTitleXString + `" y="15" fill="#010101" fill-opacity=".3">` + titleString + `</text>
-        <text x="` + offsetTitleXString + `" y="14">` + titleString + `</text>
-        <text x="` + offsetCounXString + `" y="15" fill="#010101" fill-opacity=".3">` + countString + `</text>
-        <text x="` + offsetCounXString + `" y="14">` + countString + `</text>
+        <text x="` + offsetTitleXString + `" y="14" fill="#010101" fill-opacity=".3">` + titleString + `</text>
+        <text x="` + offsetTitleXString + `" y="13">` + titleString + `</text>
+        <text x="` + offsetCounXString + `" y="14" fill="#010101" fill-opacity=".3">` + countString + `</text>
+        <text x="` + offsetCounXString + `" y="13">` + countString + `</text>
     </g>
     </svg>`
 
